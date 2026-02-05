@@ -51,6 +51,7 @@ class JBLAV(PersistentConnectionDevice):
         self._source: int = JBLInputSource.TV_ARC
         self._surround_mode: int = JBLSurroundMode.NATIVE
         self._initialized: bool = False
+        self._initial_state_received: bool = False
 
     @property
     def identifier(self) -> str:
@@ -285,8 +286,9 @@ class JBLAV(PersistentConnectionDevice):
             self._power_state = data[0] == 0x01
             _LOG.debug("[%s] Power: %s", self.log_id, "ON" if self._power_state else "OFF")
 
-            if old_state != self._power_state:
+            if not self._initial_state_received or old_state != self._power_state:
                 self._notify_entities()
+                self._initial_state_received = True
 
     async def _handle_volume(self, data: list[int]) -> None:
         """Handle volume update."""
@@ -295,8 +297,9 @@ class JBLAV(PersistentConnectionDevice):
             self._volume = data[0]
             _LOG.debug("[%s] Volume: %d", self.log_id, self._volume)
 
-            if old_volume != self._volume:
+            if not self._initial_state_received or old_volume != self._volume:
                 self._notify_entities()
+                self._initial_state_received = True
 
     async def _handle_mute(self, data: list[int]) -> None:
         """Handle mute state update."""
@@ -305,8 +308,9 @@ class JBLAV(PersistentConnectionDevice):
             self._muted = data[0] == 0x01
             _LOG.debug("[%s] Mute: %s", self.log_id, "ON" if self._muted else "OFF")
 
-            if old_muted != self._muted:
+            if not self._initial_state_received or old_muted != self._muted:
                 self._notify_entities()
+                self._initial_state_received = True
 
     async def _handle_source(self, data: list[int]) -> None:
         """Handle source update."""
@@ -315,8 +319,9 @@ class JBLAV(PersistentConnectionDevice):
             self._source = data[0]
             _LOG.debug("[%s] Source: %s", self.log_id, self.source_name)
 
-            if old_source != self._source:
+            if not self._initial_state_received or old_source != self._source:
                 self._notify_entities()
+                self._initial_state_received = True
 
     async def _handle_surround_mode(self, data: list[int]) -> None:
         """Handle surround mode update."""
@@ -325,8 +330,9 @@ class JBLAV(PersistentConnectionDevice):
             self._surround_mode = data[0]
             _LOG.debug("[%s] Surround Mode: %s", self.log_id, self.surround_mode_name)
 
-            if old_mode != self._surround_mode:
+            if not self._initial_state_received or old_mode != self._surround_mode:
                 self._notify_entities()
+                self._initial_state_received = True
 
     def _notify_entities(self) -> None:
         """Notify entities of state changes - emit UPDATE events with entity_ids."""
