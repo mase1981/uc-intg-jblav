@@ -112,20 +112,8 @@ class JBLAV(PersistentConnectionDevice):
 
             _LOG.info("[%s] TCP connection established", self.log_id)
 
-            # Send initialization command
-            await self._send_command_raw(JBLProtocol.cmd_initialization())
-
-            # Wait for initialization response
-            await asyncio.sleep(0.5)
-
-            # Query initial state
-            await self._query_all_state()
-
             self._initialized = True
-            _LOG.info("[%s] Initialization complete - Model: %s", self.log_id, self._model_name)
-
-            # Notify all entities of initial state
-            self._notify_entities()
+            _LOG.info("[%s] Connection initialized", self.log_id)
 
             return (self._reader, self._writer)
 
@@ -158,6 +146,14 @@ class JBLAV(PersistentConnectionDevice):
         This runs continuously while connected, processing all messages from the receiver.
         """
         _LOG.info("[%s] Starting message processing loop", self.log_id)
+
+        # Send initialization command
+        await self._send_command_raw(JBLProtocol.cmd_initialization())
+        await asyncio.sleep(0.2)
+
+        # Query initial state
+        _LOG.info("[%s] Querying initial device state", self.log_id)
+        await self._query_all_state()
 
         buffer = bytearray()
 
