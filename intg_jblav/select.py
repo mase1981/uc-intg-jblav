@@ -25,7 +25,7 @@ class JBLAVInputSelect(Select, Entity):
         self._device = device
         self._device_config = device_config
 
-        entity_id = f"select.{device_config.identifier}_input_source"
+        entity_id = f"select.{device_config.identifier}.input_source"
         entity_name = f"{device_config.name} Input Source"
 
         # Build input source options (all models support these)
@@ -116,7 +116,7 @@ class JBLAVSurroundModeSelect(Select, Entity):
         self._device = device
         self._device_config = device_config
 
-        entity_id = f"select.{device_config.identifier}_surround_mode"
+        entity_id = f"select.{device_config.identifier}.surround_mode"
         entity_name = f"{device_config.name} Surround Mode"
 
         # Build surround mode options (common modes for all models)

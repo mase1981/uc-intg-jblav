@@ -23,7 +23,7 @@ class JBLAVModelSensor(Sensor, Entity):
         self._device = device
         self._device_config = device_config
 
-        entity_id = f"sensor.{device_config.identifier}_model"
+        entity_id = f"sensor.{device_config.identifier}.model"
 
         super().__init__(
             entity_id,
@@ -68,7 +68,7 @@ class JBLAVVolumeSensor(Sensor, Entity):
         self._device = device
         self._device_config = device_config
 
-        entity_id = f"sensor.{device_config.identifier}_volume"
+        entity_id = f"sensor.{device_config.identifier}.volume"
 
         super().__init__(
             entity_id,
@@ -107,7 +107,7 @@ class JBLAVInputSensor(Sensor, Entity):
         self._device = device
         self._device_config = device_config
 
-        entity_id = f"sensor.{device_config.identifier}_input"
+        entity_id = f"sensor.{device_config.identifier}.input"
 
         super().__init__(
             entity_id,
@@ -145,7 +145,7 @@ class JBLAVSurroundModeSensor(Sensor, Entity):
         self._device = device
         self._device_config = device_config
 
-        entity_id = f"sensor.{device_config.identifier}_surround_mode"
+        entity_id = f"sensor.{device_config.identifier}.surround_mode"
 
         super().__init__(
             entity_id,
@@ -183,7 +183,7 @@ class JBLAVMutedSensor(Sensor, Entity):
         self._device = device
         self._device_config = device_config
 
-        entity_id = f"sensor.{device_config.identifier}_muted"
+        entity_id = f"sensor.{device_config.identifier}.muted"
 
         super().__init__(
             entity_id,
@@ -223,7 +223,7 @@ class JBLAVConnectionSensor(Sensor, Entity):
         self._device = device
         self._device_config = device_config
 
-        entity_id = f"sensor.{device_config.identifier}_connection"
+        entity_id = f"sensor.{device_config.identifier}.connection"
 
         super().__init__(
             entity_id,
