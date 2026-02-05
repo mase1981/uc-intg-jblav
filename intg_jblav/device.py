@@ -52,6 +52,9 @@ class JBLAV(PersistentConnectionDevice):
         self._surround_mode: int = JBLSurroundMode.NATIVE
         self._initialized: bool = False
         self._initial_state_received: bool = False
+        self._entities_configured: bool = False
+        self._pending_state_update: bool = False
+        self._retry_task: asyncio.Task | None = None
 
     @property
     def identifier(self) -> str:
@@ -334,12 +337,74 @@ class JBLAV(PersistentConnectionDevice):
                 self._notify_entities()
                 self._initial_state_received = True
 
+    async def _retry_entity_updates(self) -> None:
+        """
+        Retry entity updates with backoff until entities are configured.
+
+        During initial setup, entities may not be in [configured] yet when first
+        state updates arrive. This task retries updates periodically until they
+        succeed (entities are configured).
+        """
+        _LOG.info("[%s] Starting deferred entity update task", self.log_id)
+
+        for attempt in range(1, 11):  # Try up to 10 times over ~30 seconds
+            await asyncio.sleep(3.0)  # Wait 3 seconds between attempts
+
+            if not self._pending_state_update:
+                # Update already succeeded via another path
+                _LOG.debug("[%s] Pending update flag cleared, stopping retry task", self.log_id)
+                break
+
+            if self._entities_configured:
+                # Entities are now confirmed configured, emit the pending state
+                _LOG.info("[%s] Entities confirmed configured, emitting pending state (attempt %d)", self.log_id, attempt)
+                self._pending_state_update = False
+                self._emit_entity_updates()
+                break
+            else:
+                # Try emitting - if it succeeds, _entities_configured will be set
+                _LOG.info("[%s] Attempting deferred entity update (attempt %d/10)", self.log_id, attempt)
+                self._pending_state_update = False  # Clear flag before attempting
+                self._emit_entity_updates()  # This will set _entities_configured on success
+
+                if self._entities_configured:
+                    _LOG.info("[%s] Deferred entity update succeeded!", self.log_id)
+                    break
+                else:
+                    # Still not configured, flag it for next retry
+                    self._pending_state_update = True
+
+        if self._pending_state_update:
+            _LOG.warning("[%s] Failed to update entities after 10 attempts - entities may not be subscribed", self.log_id)
+
     def _notify_entities(self) -> None:
-        """Notify entities of state changes - emit UPDATE events with entity_ids."""
+        """
+        Notify entities of state changes - emit UPDATE events with entity_ids.
+
+        If entities are not yet configured (subscribe_events hasn't happened),
+        this will defer the update and retry later.
+        """
+        # If entities are not yet confirmed configured, defer the update
+        if not self._entities_configured:
+            _LOG.info("[%s] Entities not yet configured, deferring update", self.log_id)
+            self._pending_state_update = True
+
+            # Start retry task if not already running
+            if self._retry_task is None or self._retry_task.done():
+                self._retry_task = asyncio.create_task(self._retry_entity_updates())
+            return
+
+        # Entities are configured, emit immediately
+        self._emit_entity_updates()
+
+    def _emit_entity_updates(self) -> None:
+        """Emit UPDATE events for all entities with current state."""
         from ucapi.media_player import Attributes as MediaAttributes, States as MediaStates
         from ucapi.sensor import Attributes as SensorAttributes, States as SensorStates
         from ucapi.select import Attributes as SelectAttributes, States as SelectStates
         from ucapi.remote import Attributes as RemoteAttributes
+
+        _LOG.debug("[%s] Emitting entity updates", self.log_id)
 
         # Media Player Entity
         media_player_id = f"media_player.{self.identifier}"
@@ -438,6 +503,12 @@ class JBLAV(PersistentConnectionDevice):
             RemoteAttributes.STATE: "ON" if self._power_state else "OFF"
         }
         self.events.emit(DeviceEvents.UPDATE, remote_id, remote_attrs)
+
+        # Mark entities as configured after successful emission
+        # This confirms that entities are in [configured] collection and accepting updates
+        if not self._entities_configured:
+            _LOG.info("[%s] Entity updates emitted successfully - entities are now configured", self.log_id)
+            self._entities_configured = True
 
     async def _send_command_raw(self, command: bytes) -> bool:
         """Send raw command bytes to receiver."""
