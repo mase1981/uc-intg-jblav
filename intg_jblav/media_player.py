@@ -82,35 +82,6 @@ class JBLAVMediaPlayer(MediaPlayer):
             cmd_handler=self.handle_command,
         )
 
-        # Subscribe to device events
-        device.events.on(device.identifier, self._on_device_update)
-
-    def _on_device_update(self, entity_id: str, attributes: dict[str, Any]) -> None:
-        """Handle device state updates."""
-        _LOG.debug("[%s] Device update: %s", self.id, attributes)
-
-        # Update entity attributes based on device state
-        update_attrs = {}
-
-        if "power" in attributes:
-            update_attrs[Attributes.STATE] = States.ON if attributes["power"] else States.STANDBY
-
-        if "volume" in attributes:
-            update_attrs[Attributes.VOLUME] = attributes["volume"]
-
-        if "muted" in attributes:
-            update_attrs[Attributes.MUTED] = attributes["muted"]
-
-        if "source_name" in attributes:
-            update_attrs[Attributes.SOURCE] = attributes["source_name"]
-
-        if "surround_mode_name" in attributes:
-            update_attrs[Attributes.SOUND_MODE] = attributes["surround_mode_name"]
-
-        if update_attrs:
-            self.attributes.update(update_attrs)
-            self.emit_update()
-
     async def handle_command(
         self, entity: MediaPlayer, cmd_id: str, params: dict[str, Any] | None
     ) -> StatusCodes:

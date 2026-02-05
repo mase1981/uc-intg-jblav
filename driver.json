@@ -1,6 +1,6 @@
 {
   "driver_id": "jblav",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "min_core_api": "0.22.0",
   "name": {
     "en": "JBL AV Receiver"
@@ -14,7 +14,7 @@
     "email": "meir.miyara@gmail.com"
   },
   "home_page": "https://github.com/mase1981/uc-intg-jblav",
-  "release_date": "2026-02-04",
+  "release_date": "2026-02-05",
   "setup_data_schema": {
     "title": {
       "en": "JBL AV Receiver Setup"

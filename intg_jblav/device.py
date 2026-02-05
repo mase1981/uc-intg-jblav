@@ -124,6 +124,9 @@ class JBLAV(PersistentConnectionDevice):
             self._initialized = True
             _LOG.info("[%s] Initialization complete - Model: %s", self.log_id, self._model_name)
 
+            # Notify all entities of initial state
+            self._notify_entities()
+
             return (self._reader, self._writer)
 
         except asyncio.TimeoutError:
@@ -287,7 +290,7 @@ class JBLAV(PersistentConnectionDevice):
             _LOG.debug("[%s] Power: %s", self.log_id, "ON" if self._power_state else "OFF")
 
             if old_state != self._power_state:
-                self.events.emit(DeviceEvents.UPDATE, self.identifier, {"power": self._power_state})
+                self._notify_entities()
 
     async def _handle_volume(self, data: list[int]) -> None:
         """Handle volume update."""
@@ -297,7 +300,7 @@ class JBLAV(PersistentConnectionDevice):
             _LOG.debug("[%s] Volume: %d", self.log_id, self._volume)
 
             if old_volume != self._volume:
-                self.events.emit(DeviceEvents.UPDATE, self.identifier, {"volume": self._volume})
+                self._notify_entities()
 
     async def _handle_mute(self, data: list[int]) -> None:
         """Handle mute state update."""
@@ -307,7 +310,7 @@ class JBLAV(PersistentConnectionDevice):
             _LOG.debug("[%s] Mute: %s", self.log_id, "ON" if self._muted else "OFF")
 
             if old_muted != self._muted:
-                self.events.emit(DeviceEvents.UPDATE, self.identifier, {"muted": self._muted})
+                self._notify_entities()
 
     async def _handle_source(self, data: list[int]) -> None:
         """Handle source update."""
@@ -317,7 +320,7 @@ class JBLAV(PersistentConnectionDevice):
             _LOG.debug("[%s] Source: %s", self.log_id, self.source_name)
 
             if old_source != self._source:
-                self.events.emit(DeviceEvents.UPDATE, self.identifier, {"source": self._source, "source_name": self.source_name})
+                self._notify_entities()
 
     async def _handle_surround_mode(self, data: list[int]) -> None:
         """Handle surround mode update."""
@@ -327,7 +330,112 @@ class JBLAV(PersistentConnectionDevice):
             _LOG.debug("[%s] Surround Mode: %s", self.log_id, self.surround_mode_name)
 
             if old_mode != self._surround_mode:
-                self.events.emit(DeviceEvents.UPDATE, self.identifier, {"surround_mode": self._surround_mode, "surround_mode_name": self.surround_mode_name})
+                self._notify_entities()
+
+    def _notify_entities(self) -> None:
+        """Notify entities of state changes - emit UPDATE events with entity_ids."""
+        from ucapi.media_player import Attributes as MediaAttributes, States as MediaStates
+        from ucapi.sensor import Attributes as SensorAttributes, States as SensorStates
+        from ucapi.select import Attributes as SelectAttributes, States as SelectStates
+        from ucapi.remote import Attributes as RemoteAttributes
+
+        # Media Player Entity
+        media_player_id = f"media_player.{self.identifier}"
+        media_player_attrs = {
+            MediaAttributes.STATE: MediaStates.ON if self._power_state else MediaStates.STANDBY,
+            MediaAttributes.VOLUME: self._volume,
+            MediaAttributes.MUTED: self._muted,
+            MediaAttributes.SOURCE: self.source_name,
+            MediaAttributes.SOURCE_LIST: list(JBLProtocol.INPUT_SOURCE_NAMES.values()),
+            MediaAttributes.SOUND_MODE: self.surround_mode_name,
+            MediaAttributes.SOUND_MODE_LIST: [
+                JBLProtocol.SURROUND_MODE_NAMES[JBLSurroundMode.STEREO_2_0],
+                JBLProtocol.SURROUND_MODE_NAMES[JBLSurroundMode.STEREO_2_1],
+                JBLProtocol.SURROUND_MODE_NAMES[JBLSurroundMode.ALL_STEREO],
+                JBLProtocol.SURROUND_MODE_NAMES[JBLSurroundMode.NATIVE],
+            ],
+        }
+        self.events.emit(DeviceEvents.UPDATE, media_player_id, media_player_attrs)
+
+        # Sensor: Model
+        model_sensor_id = f"sensor.{self.identifier}.model"
+        model_sensor_attrs = {
+            SensorAttributes.STATE: SensorStates.ON if self._model_name != "Unknown" else SensorStates.UNAVAILABLE,
+            SensorAttributes.VALUE: self._model_name,
+        }
+        self.events.emit(DeviceEvents.UPDATE, model_sensor_id, model_sensor_attrs)
+
+        # Sensor: Volume
+        volume_sensor_id = f"sensor.{self.identifier}.volume"
+        volume_sensor_attrs = {
+            SensorAttributes.STATE: SensorStates.ON,
+            SensorAttributes.VALUE: self._volume,
+            SensorAttributes.UNIT: "%",
+        }
+        self.events.emit(DeviceEvents.UPDATE, volume_sensor_id, volume_sensor_attrs)
+
+        # Sensor: Input
+        input_sensor_id = f"sensor.{self.identifier}.input"
+        input_sensor_attrs = {
+            SensorAttributes.STATE: SensorStates.ON,
+            SensorAttributes.VALUE: self.source_name,
+        }
+        self.events.emit(DeviceEvents.UPDATE, input_sensor_id, input_sensor_attrs)
+
+        # Sensor: Surround Mode
+        surround_sensor_id = f"sensor.{self.identifier}.surround_mode"
+        surround_sensor_attrs = {
+            SensorAttributes.STATE: SensorStates.ON,
+            SensorAttributes.VALUE: self.surround_mode_name,
+        }
+        self.events.emit(DeviceEvents.UPDATE, surround_sensor_id, surround_sensor_attrs)
+
+        # Sensor: Muted
+        muted_sensor_id = f"sensor.{self.identifier}.muted"
+        muted_state_str = "Muted" if self._muted else "Unmuted"
+        muted_sensor_attrs = {
+            SensorAttributes.STATE: SensorStates.ON,
+            SensorAttributes.VALUE: muted_state_str,
+        }
+        self.events.emit(DeviceEvents.UPDATE, muted_sensor_id, muted_sensor_attrs)
+
+        # Sensor: Connection
+        connection_sensor_id = f"sensor.{self.identifier}.connection"
+        connection_attrs = {
+            SensorAttributes.STATE: SensorStates.ON if self.is_connected else SensorStates.UNAVAILABLE,
+            SensorAttributes.VALUE: "connected" if self.is_connected else "disconnected",
+        }
+        self.events.emit(DeviceEvents.UPDATE, connection_sensor_id, connection_attrs)
+
+        # Select: Input Source
+        input_select_id = f"select.{self.identifier}.input_source"
+        input_select_attrs = {
+            SelectAttributes.STATE: SelectStates.ON if self._power_state else SelectStates.UNAVAILABLE,
+            SelectAttributes.CURRENT_OPTION: self.source_name,
+            SelectAttributes.OPTIONS: list(JBLProtocol.INPUT_SOURCE_NAMES.values()),
+        }
+        self.events.emit(DeviceEvents.UPDATE, input_select_id, input_select_attrs)
+
+        # Select: Surround Mode
+        surround_select_id = f"select.{self.identifier}.surround_mode"
+        surround_select_attrs = {
+            SelectAttributes.STATE: SelectStates.ON if self._power_state else SelectStates.UNAVAILABLE,
+            SelectAttributes.CURRENT_OPTION: self.surround_mode_name,
+            SelectAttributes.OPTIONS: [
+                JBLProtocol.SURROUND_MODE_NAMES[JBLSurroundMode.STEREO_2_0],
+                JBLProtocol.SURROUND_MODE_NAMES[JBLSurroundMode.STEREO_2_1],
+                JBLProtocol.SURROUND_MODE_NAMES[JBLSurroundMode.ALL_STEREO],
+                JBLProtocol.SURROUND_MODE_NAMES[JBLSurroundMode.NATIVE],
+            ],
+        }
+        self.events.emit(DeviceEvents.UPDATE, surround_select_id, surround_select_attrs)
+
+        # Remote Entity
+        remote_id = f"remote.{self.identifier}"
+        remote_attrs = {
+            RemoteAttributes.STATE: "ON" if self._power_state else "OFF"
+        }
+        self.events.emit(DeviceEvents.UPDATE, remote_id, remote_attrs)
 
     async def _send_command_raw(self, command: bytes) -> bool:
         """Send raw command bytes to receiver."""

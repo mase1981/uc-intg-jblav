@@ -60,9 +60,6 @@ class JBLAVRemote(Remote, Entity):
             cmd_handler=self.handle_command,
         )
 
-        # Subscribe to device events
-        device.events.on(device.identifier, self._on_device_update)
-
         _LOG.info("[%s] Remote entity initialized", self.id)
 
     def _create_simple_commands(self) -> list[str]:
@@ -214,12 +211,6 @@ class JBLAVRemote(Remote, Entity):
                 ],
             },
         ]
-
-    def _on_device_update(self, entity_id: str, attributes: dict[str, Any]) -> None:
-        """Handle device state updates."""
-        if "power" in attributes:
-            self.attributes[Attributes.STATE] = States.ON if attributes["power"] else States.OFF
-            self.emit_update()
 
     async def handle_command(
         self, entity: Remote, cmd_id: str, params: dict[str, Any] | None
@@ -448,8 +439,3 @@ class JBLAVRemote(Remote, Entity):
         except Exception as err:
             _LOG.error("[%s] Command error: %s", self.id, err)
             return StatusCodes.SERVER_ERROR
-
-    def emit_update(self) -> None:
-        """Emit entity update to Remote."""
-        if hasattr(self, 'api') and self.api:
-            self.api.configured_entities.update(self)

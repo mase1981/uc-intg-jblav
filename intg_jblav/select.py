@@ -56,21 +56,7 @@ class JBLAVInputSelect(Select, Entity):
             cmd_handler=self.handle_command,
         )
 
-        # Subscribe to device events
-        device.events.on(device.identifier, self._on_device_update)
-
         _LOG.info("[%s] Input select entity initialized", self.id)
-
-    def _on_device_update(self, entity_id: str, attributes: dict[str, Any]) -> None:
-        """Handle device state updates."""
-        if "source_name" in attributes:
-            self.attributes[Attributes.CURRENT_OPTION] = attributes["source_name"]
-            self.attributes[Attributes.STATE] = States.AVAILABLE
-            self.emit_update()
-
-        if "power" in attributes:
-            self.attributes[Attributes.STATE] = States.AVAILABLE if attributes["power"] else States.UNAVAILABLE
-            self.emit_update()
 
     async def handle_command(
         self, entity: Select, cmd_id: str, params: dict[str, Any] | None
@@ -101,11 +87,6 @@ class JBLAVInputSelect(Select, Entity):
         except Exception as err:
             _LOG.error("[%s] Command error: %s", self.id, err)
             return StatusCodes.SERVER_ERROR
-
-    def emit_update(self) -> None:
-        """Emit entity update to Remote."""
-        if hasattr(self, 'api') and self.api:
-            self.api.configured_entities.update(self)
 
 
 class JBLAVSurroundModeSelect(Select, Entity):
@@ -140,21 +121,7 @@ class JBLAVSurroundModeSelect(Select, Entity):
             cmd_handler=self.handle_command,
         )
 
-        # Subscribe to device events
-        device.events.on(device.identifier, self._on_device_update)
-
         _LOG.info("[%s] Surround mode select entity initialized", self.id)
-
-    def _on_device_update(self, entity_id: str, attributes: dict[str, Any]) -> None:
-        """Handle device state updates."""
-        if "surround_mode_name" in attributes:
-            self.attributes[Attributes.CURRENT_OPTION] = attributes["surround_mode_name"]
-            self.attributes[Attributes.STATE] = States.AVAILABLE
-            self.emit_update()
-
-        if "power" in attributes:
-            self.attributes[Attributes.STATE] = States.AVAILABLE if attributes["power"] else States.UNAVAILABLE
-            self.emit_update()
 
     async def handle_command(
         self, entity: Select, cmd_id: str, params: dict[str, Any] | None
@@ -185,8 +152,3 @@ class JBLAVSurroundModeSelect(Select, Entity):
         except Exception as err:
             _LOG.error("[%s] Command error: %s", self.id, err)
             return StatusCodes.SERVER_ERROR
-
-    def emit_update(self) -> None:
-        """Emit entity update to Remote."""
-        if hasattr(self, 'api') and self.api:
-            self.api.configured_entities.update(self)
