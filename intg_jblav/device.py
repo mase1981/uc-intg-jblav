@@ -339,16 +339,17 @@ class JBLAV(PersistentConnectionDevice):
 
     async def _retry_entity_updates(self) -> None:
         """
-        Retry entity updates with backoff until entities are configured.
+        Retry entity updates until entities are configured.
 
         During initial setup, entities may not be in [configured] yet when first
-        state updates arrive. This task retries updates periodically until they
-        succeed (entities are configured).
+        state updates arrive. This task retries updates rapidly at first, then
+        backs off, until entities are subscribed and updates succeed.
         """
-        _LOG.info("[%s] Starting deferred entity update task", self.log_id)
+        # Aggressive initial retries with exponential backoff
+        retry_delays = [0.5, 0.5, 1.0, 2.0, 3.0, 5.0, 5.0, 5.0, 10.0, 10.0]  # Total ~42 seconds
 
-        for attempt in range(1, 11):  # Try up to 10 times over ~30 seconds
-            await asyncio.sleep(3.0)  # Wait 3 seconds between attempts
+        for attempt, delay in enumerate(retry_delays, start=1):
+            await asyncio.sleep(delay)
 
             if not self._pending_state_update:
                 # Update already succeeded via another path
@@ -363,7 +364,7 @@ class JBLAV(PersistentConnectionDevice):
                 break
             else:
                 # Try emitting - if it succeeds, _entities_configured will be set
-                _LOG.info("[%s] Attempting deferred entity update (attempt %d/10)", self.log_id, attempt)
+                _LOG.info("[%s] Retry entity update (attempt %d/%d, waited %.1fs)", self.log_id, attempt, len(retry_delays), delay)
                 self._pending_state_update = False  # Clear flag before attempting
                 self._emit_entity_updates()  # This will set _entities_configured on success
 
@@ -375,27 +376,29 @@ class JBLAV(PersistentConnectionDevice):
                     self._pending_state_update = True
 
         if self._pending_state_update:
-            _LOG.warning("[%s] Failed to update entities after 10 attempts - entities may not be subscribed", self.log_id)
+            _LOG.warning("[%s] Failed to update entities after %d attempts - entities may not be subscribed", self.log_id, len(retry_delays))
 
     def _notify_entities(self) -> None:
         """
         Notify entities of state changes - emit UPDATE events with entity_ids.
 
         If entities are not yet configured (subscribe_events hasn't happened),
-        this will defer the update and retry later.
+        this will start a retry task that attempts updates until successful.
         """
-        # If entities are not yet confirmed configured, defer the update
-        if not self._entities_configured:
-            _LOG.info("[%s] Entities not yet configured, deferring update", self.log_id)
-            self._pending_state_update = True
+        # Always try to emit immediately
+        self._emit_entity_updates()
 
+        # If entities aren't confirmed configured yet, start retry task as insurance
+        # This handles the case where subscribe_events hasn't happened yet
+        if not self._entities_configured:
+            self._pending_state_update = True
             # Start retry task if not already running
             if self._retry_task is None or self._retry_task.done():
+                _LOG.info("[%s] Starting deferred entity update task (insurance for late subscription)", self.log_id)
                 self._retry_task = asyncio.create_task(self._retry_entity_updates())
-            return
-
-        # Entities are configured, emit immediately
-        self._emit_entity_updates()
+        else:
+            # Entities are configured, clear any pending state
+            self._pending_state_update = False
 
     def _emit_entity_updates(self) -> None:
         """Emit UPDATE events for all entities with current state."""
