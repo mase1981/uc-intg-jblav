@@ -11,16 +11,13 @@ import logging
 from typing import Any
 from ucapi import StatusCodes
 from ucapi.remote import Attributes, Commands, Features, Remote, States
-from ucapi.ui import Buttons, DeviceButtonMapping, create_btn_mapping, Size, UiPage
+from ucapi.ui import Buttons, DeviceButtonMapping, create_btn_mapping, UiPage
 from ucapi_framework.entity import Entity
 from intg_jblav.config import JBLAVConfig
 from intg_jblav.device import JBLAV
 from intg_jblav.protocol import JBLProtocol
 
 _LOG = logging.getLogger(__name__)
-
-# Standard button sizes
-SIZE_1X1 = Size(width=1, height=1)
 
 
 class JBLAVRemote(Remote, Entity):
@@ -136,16 +133,16 @@ class JBLAVRemote(Remote, Entity):
                 "name": "Navigation",
                 "grid": {"columns": 3, "rows": 4},
                 "items": [
-                    {"command": "MENU", "location": {"x": 0, "y": 0}, "size": SIZE_1X1, "icon": "uc:menu", "text": "Menu"},
-                    {"command": "CURSOR_UP", "location": {"x": 1, "y": 0}, "size": SIZE_1X1, "icon": "uc:up-arrow-bold"},
-                    {"command": "BACK", "location": {"x": 2, "y": 0}, "size": SIZE_1X1, "icon": "uc:back", "text": "Back"},
-                    {"command": "CURSOR_LEFT", "location": {"x": 0, "y": 1}, "size": SIZE_1X1, "icon": "uc:left-arrow-bold"},
-                    {"command": "CURSOR_ENTER", "location": {"x": 1, "y": 1}, "size": SIZE_1X1, "icon": "uc:circle", "text": "OK"},
-                    {"command": "CURSOR_RIGHT", "location": {"x": 2, "y": 1}, "size": SIZE_1X1, "icon": "uc:right-arrow-bold"},
-                    {"command": "CURSOR_DOWN", "location": {"x": 1, "y": 2}, "size": SIZE_1X1, "icon": "uc:down-arrow-bold"},
-                    {"command": "VOLUME_UP", "location": {"x": 0, "y": 3}, "size": SIZE_1X1, "icon": "uc:volume-up", "text": "Vol+"},
-                    {"command": "MUTE_TOGGLE", "location": {"x": 1, "y": 3}, "size": SIZE_1X1, "icon": "uc:mute", "text": "Mute"},
-                    {"command": "VOLUME_DOWN", "location": {"x": 2, "y": 3}, "size": SIZE_1X1, "icon": "uc:volume-down", "text": "Vol-"},
+                    {"command": "MENU", "location": {"x": 0, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:menu", "text": "Menu"},
+                    {"command": "CURSOR_UP", "location": {"x": 1, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:up-arrow-bold"},
+                    {"command": "BACK", "location": {"x": 2, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:back", "text": "Back"},
+                    {"command": "CURSOR_LEFT", "location": {"x": 0, "y": 1}, "size": {"width": 1, "height": 1}, "icon": "uc:left-arrow-bold"},
+                    {"command": "CURSOR_ENTER", "location": {"x": 1, "y": 1}, "size": {"width": 1, "height": 1}, "icon": "uc:circle", "text": "OK"},
+                    {"command": "CURSOR_RIGHT", "location": {"x": 2, "y": 1}, "size": {"width": 1, "height": 1}, "icon": "uc:right-arrow-bold"},
+                    {"command": "CURSOR_DOWN", "location": {"x": 1, "y": 2}, "size": {"width": 1, "height": 1}, "icon": "uc:down-arrow-bold"},
+                    {"command": "VOLUME_UP", "location": {"x": 0, "y": 3}, "size": {"width": 1, "height": 1}, "icon": "uc:volume-up", "text": "Vol+"},
+                    {"command": "MUTE_TOGGLE", "location": {"x": 1, "y": 3}, "size": {"width": 1, "height": 1}, "icon": "uc:mute", "text": "Mute"},
+                    {"command": "VOLUME_DOWN", "location": {"x": 2, "y": 3}, "size": {"width": 1, "height": 1}, "icon": "uc:volume-down", "text": "Vol-"},
                 ],
             },
             # Page 2: Input Sources
@@ -154,20 +151,20 @@ class JBLAVRemote(Remote, Entity):
                 "name": "Inputs",
                 "grid": {"columns": 3, "rows": 5},
                 "items": [
-                    {"command": "TV", "location": {"x": 0, "y": 0}, "size": SIZE_1X1, "icon": "uc:tv", "text": "TV/ARC"},
-                    {"command": "HDMI_1", "location": {"x": 1, "y": 0}, "size": SIZE_1X1, "icon": "uc:source", "text": "HDMI 1"},
-                    {"command": "HDMI_2", "location": {"x": 2, "y": 0}, "size": SIZE_1X1, "icon": "uc:source", "text": "HDMI 2"},
-                    {"command": "HDMI_3", "location": {"x": 0, "y": 1}, "size": SIZE_1X1, "icon": "uc:source", "text": "HDMI 3"},
-                    {"command": "HDMI_4", "location": {"x": 1, "y": 1}, "size": SIZE_1X1, "icon": "uc:source", "text": "HDMI 4"},
-                    {"command": "HDMI_5", "location": {"x": 2, "y": 1}, "size": SIZE_1X1, "icon": "uc:source", "text": "HDMI 5"},
-                    {"command": "HDMI_6", "location": {"x": 0, "y": 2}, "size": SIZE_1X1, "icon": "uc:source", "text": "HDMI 6"},
-                    {"command": "COAX", "location": {"x": 1, "y": 2}, "size": SIZE_1X1, "icon": "uc:source", "text": "Coax"},
-                    {"command": "OPTICAL", "location": {"x": 2, "y": 2}, "size": SIZE_1X1, "icon": "uc:source", "text": "Optical"},
-                    {"command": "ANALOG_1", "location": {"x": 0, "y": 3}, "size": SIZE_1X1, "icon": "uc:source", "text": "Analog 1"},
-                    {"command": "ANALOG_2", "location": {"x": 1, "y": 3}, "size": SIZE_1X1, "icon": "uc:source", "text": "Analog 2"},
-                    {"command": "PHONO", "location": {"x": 2, "y": 3}, "size": SIZE_1X1, "icon": "uc:source", "text": "Phono"},
-                    {"command": "BLUETOOTH", "location": {"x": 0, "y": 4}, "size": SIZE_1X1, "icon": "uc:bluetooth", "text": "Bluetooth"},
-                    {"command": "NETWORK", "location": {"x": 1, "y": 4}, "size": SIZE_1X1, "icon": "uc:network", "text": "Network"},
+                    {"command": "TV", "location": {"x": 0, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:tv", "text": "TV/ARC"},
+                    {"command": "HDMI_1", "location": {"x": 1, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "HDMI 1"},
+                    {"command": "HDMI_2", "location": {"x": 2, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "HDMI 2"},
+                    {"command": "HDMI_3", "location": {"x": 0, "y": 1}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "HDMI 3"},
+                    {"command": "HDMI_4", "location": {"x": 1, "y": 1}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "HDMI 4"},
+                    {"command": "HDMI_5", "location": {"x": 2, "y": 1}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "HDMI 5"},
+                    {"command": "HDMI_6", "location": {"x": 0, "y": 2}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "HDMI 6"},
+                    {"command": "COAX", "location": {"x": 1, "y": 2}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "Coax"},
+                    {"command": "OPTICAL", "location": {"x": 2, "y": 2}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "Optical"},
+                    {"command": "ANALOG_1", "location": {"x": 0, "y": 3}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "Analog 1"},
+                    {"command": "ANALOG_2", "location": {"x": 1, "y": 3}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "Analog 2"},
+                    {"command": "PHONO", "location": {"x": 2, "y": 3}, "size": {"width": 1, "height": 1}, "icon": "uc:source", "text": "Phono"},
+                    {"command": "BLUETOOTH", "location": {"x": 0, "y": 4}, "size": {"width": 1, "height": 1}, "icon": "uc:bluetooth", "text": "Bluetooth"},
+                    {"command": "NETWORK", "location": {"x": 1, "y": 4}, "size": {"width": 1, "height": 1}, "icon": "uc:network", "text": "Network"},
                 ],
             },
             # Page 3: Surround Modes
@@ -176,12 +173,12 @@ class JBLAVRemote(Remote, Entity):
                 "name": "Surround",
                 "grid": {"columns": 2, "rows": 3},
                 "items": [
-                    {"command": "SURROUND_MODE_NATIVE", "location": {"x": 0, "y": 0}, "size": SIZE_1X1, "text": "Native"},
-                    {"command": "SURROUND_MODE_STEREO_2_0", "location": {"x": 1, "y": 0}, "size": SIZE_1X1, "text": "Stereo 2.0"},
-                    {"command": "SURROUND_MODE_STEREO_2_1", "location": {"x": 0, "y": 1}, "size": SIZE_1X1, "text": "Stereo 2.1"},
-                    {"command": "SURROUND_MODE_ALL_STEREO", "location": {"x": 1, "y": 1}, "size": SIZE_1X1, "text": "All Stereo"},
-                    {"command": "SURROUND_MODE_DOLBY_SURROUND", "location": {"x": 0, "y": 2}, "size": SIZE_1X1, "text": "Dolby"},
-                    {"command": "SURROUND_MODE_DTS_NEURAL_X", "location": {"x": 1, "y": 2}, "size": SIZE_1X1, "text": "DTS:X"},
+                    {"command": "SURROUND_MODE_NATIVE", "location": {"x": 0, "y": 0}, "size": {"width": 1, "height": 1}, "text": "Native"},
+                    {"command": "SURROUND_MODE_STEREO_2_0", "location": {"x": 1, "y": 0}, "size": {"width": 1, "height": 1}, "text": "Stereo 2.0"},
+                    {"command": "SURROUND_MODE_STEREO_2_1", "location": {"x": 0, "y": 1}, "size": {"width": 1, "height": 1}, "text": "Stereo 2.1"},
+                    {"command": "SURROUND_MODE_ALL_STEREO", "location": {"x": 1, "y": 1}, "size": {"width": 1, "height": 1}, "text": "All Stereo"},
+                    {"command": "SURROUND_MODE_DOLBY_SURROUND", "location": {"x": 0, "y": 2}, "size": {"width": 1, "height": 1}, "text": "Dolby"},
+                    {"command": "SURROUND_MODE_DTS_NEURAL_X", "location": {"x": 1, "y": 2}, "size": {"width": 1, "height": 1}, "text": "DTS:X"},
                 ],
             },
             # Page 4: Audio Settings
@@ -190,14 +187,14 @@ class JBLAVRemote(Remote, Entity):
                 "name": "Audio",
                 "grid": {"columns": 2, "rows": 4},
                 "items": [
-                    {"command": "TREBLE_UP", "location": {"x": 0, "y": 0}, "size": SIZE_1X1, "icon": "uc:plus", "text": "Treble+"},
-                    {"command": "TREBLE_DOWN", "location": {"x": 1, "y": 0}, "size": SIZE_1X1, "icon": "uc:minus", "text": "Treble-"},
-                    {"command": "BASS_UP", "location": {"x": 0, "y": 1}, "size": SIZE_1X1, "icon": "uc:plus", "text": "Bass+"},
-                    {"command": "BASS_DOWN", "location": {"x": 1, "y": 1}, "size": SIZE_1X1, "icon": "uc:minus", "text": "Bass-"},
-                    {"command": "ROOM_EQ_ON", "location": {"x": 0, "y": 2}, "size": SIZE_1X1, "text": "Room EQ On"},
-                    {"command": "ROOM_EQ_OFF", "location": {"x": 1, "y": 2}, "size": SIZE_1X1, "text": "Room EQ Off"},
-                    {"command": "DIALOG_ON", "location": {"x": 0, "y": 3}, "size": SIZE_1X1, "text": "Dialog On"},
-                    {"command": "DIALOG_OFF", "location": {"x": 1, "y": 3}, "size": SIZE_1X1, "text": "Dialog Off"},
+                    {"command": "TREBLE_UP", "location": {"x": 0, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:plus", "text": "Treble+"},
+                    {"command": "TREBLE_DOWN", "location": {"x": 1, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:minus", "text": "Treble-"},
+                    {"command": "BASS_UP", "location": {"x": 0, "y": 1}, "size": {"width": 1, "height": 1}, "icon": "uc:plus", "text": "Bass+"},
+                    {"command": "BASS_DOWN", "location": {"x": 1, "y": 1}, "size": {"width": 1, "height": 1}, "icon": "uc:minus", "text": "Bass-"},
+                    {"command": "ROOM_EQ_ON", "location": {"x": 0, "y": 2}, "size": {"width": 1, "height": 1}, "text": "Room EQ On"},
+                    {"command": "ROOM_EQ_OFF", "location": {"x": 1, "y": 2}, "size": {"width": 1, "height": 1}, "text": "Room EQ Off"},
+                    {"command": "DIALOG_ON", "location": {"x": 0, "y": 3}, "size": {"width": 1, "height": 1}, "text": "Dialog On"},
+                    {"command": "DIALOG_OFF", "location": {"x": 1, "y": 3}, "size": {"width": 1, "height": 1}, "text": "Dialog Off"},
                 ],
             },
             # Page 5: Advanced & System
@@ -206,14 +203,14 @@ class JBLAVRemote(Remote, Entity):
                 "name": "System",
                 "grid": {"columns": 2, "rows": 4},
                 "items": [
-                    {"command": "DISPLAY_DIM", "location": {"x": 0, "y": 0}, "size": SIZE_1X1, "icon": "uc:brightness", "text": "Dim"},
-                    {"command": "DOLBY_MODE_TOGGLE", "location": {"x": 1, "y": 0}, "size": SIZE_1X1, "text": "Dolby Mode"},
-                    {"command": "PARTY_ON", "location": {"x": 0, "y": 1}, "size": SIZE_1X1, "text": "Party On"},
-                    {"command": "PARTY_OFF", "location": {"x": 1, "y": 1}, "size": SIZE_1X1, "text": "Party Off"},
-                    {"command": "DRC_ON", "location": {"x": 0, "y": 2}, "size": SIZE_1X1, "text": "DRC On"},
-                    {"command": "DRC_OFF", "location": {"x": 1, "y": 2}, "size": SIZE_1X1, "text": "DRC Off"},
-                    {"command": "REBOOT", "location": {"x": 0, "y": 3}, "size": SIZE_1X1, "icon": "uc:refresh", "text": "Reboot"},
-                    {"command": "FACTORY_RESET", "location": {"x": 1, "y": 3}, "size": SIZE_1X1, "icon": "uc:warning", "text": "Factory Reset"},
+                    {"command": "DISPLAY_DIM", "location": {"x": 0, "y": 0}, "size": {"width": 1, "height": 1}, "icon": "uc:brightness", "text": "Dim"},
+                    {"command": "DOLBY_MODE_TOGGLE", "location": {"x": 1, "y": 0}, "size": {"width": 1, "height": 1}, "text": "Dolby Mode"},
+                    {"command": "PARTY_ON", "location": {"x": 0, "y": 1}, "size": {"width": 1, "height": 1}, "text": "Party On"},
+                    {"command": "PARTY_OFF", "location": {"x": 1, "y": 1}, "size": {"width": 1, "height": 1}, "text": "Party Off"},
+                    {"command": "DRC_ON", "location": {"x": 0, "y": 2}, "size": {"width": 1, "height": 1}, "text": "DRC On"},
+                    {"command": "DRC_OFF", "location": {"x": 1, "y": 2}, "size": {"width": 1, "height": 1}, "text": "DRC Off"},
+                    {"command": "REBOOT", "location": {"x": 0, "y": 3}, "size": {"width": 1, "height": 1}, "icon": "uc:refresh", "text": "Reboot"},
+                    {"command": "FACTORY_RESET", "location": {"x": 1, "y": 3}, "size": {"width": 1, "height": 1}, "icon": "uc:warning", "text": "Factory Reset"},
                 ],
             },
         ]
